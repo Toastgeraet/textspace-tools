@@ -2,6 +2,8 @@
 defineProps<{
     msg: string
 }>()
+
+console.log("deployment");
 </script>
 
 <template>
