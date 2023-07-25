@@ -1,0 +1,115 @@
+const SERVICE_MINING_PERMITTED =
+{
+    faction_only: false,
+    name: 'Mining Permitted',
+    service_id: '0'
+};
+const SERVICE_TRADING_COMMODITIES =
+{
+    faction_only: false,
+    name: 'Trading Commodities',
+    service_id: '1'
+};
+const SERVICE_TRADING_PORTS = { faction_only: false, name: 'Trading Ports', service_id: '2' };
+const SERVICE_PERSONAL = { faction_only: true, name: 'Personal', service_id: '3' };
+const SERVICE_SHIP_TRANSPORT = { faction_only: false, name: 'Ship Transport', service_id: '4' };
+const SERVICE_SHIP_REPAIR = { faction_only: false, name: 'Ship Repair', service_id: '5' };
+const SERVICE_SHIP_TRADING = { faction_only: false, name: 'Ship Trading', service_id: '6' };
+const SERVICE_CASINO = { faction_only: false, name: 'Casino', service_id: '8' };
+const SERVICE_FACTION_DROP = { faction_only: true, name: 'Faction Drop', service_id: '9' };
+const SERVICE_SHIP_REFUEL = { faction_only: false, name: 'Ship Refuel', service_id: '10' };
+const SERVICE_TRADING_CONSUMABLES =
+{
+    faction_only: false,
+    name: 'Trading Consumables',
+    service_id: '11'
+};
+const SERVICE_AMENITY = { faction_only: false, name: 'Amenity', service_id: '13' };
+const SERVICE_FACTION_PORT_CRAFTING =
+{
+    faction_only: true,
+    name: 'Faction Port Crafting',
+    service_id: '14'
+};
+const SERVICE_FACTION_STORAGE = { faction_only: true, name: 'Faction Storage', service_id: '15' };
+const SERVICE_TRADING_PARTS = { faction_only: false, name: 'Trading Parts', service_id: '16' };
+const SERVICE_FACTION_PORT_CUSTOMISATION =
+{
+    faction_only: true,
+    name: 'Faction Port Customisation',
+    service_id: '17'
+};
+const SERVICE_FACTION_TREASURY =
+{
+    faction_only: true,
+    name: 'Faction Treasury',
+    service_id: '18'
+};
+const SERVICE_TRADING_ILLEGAL_COMMODITIES =
+{
+    faction_only: false,
+    name: 'Trading Illegal Commodities',
+    service_id: '19'
+};
+const SERVICE_TRADING_ILLEGAL_PORTS =
+{
+    faction_only: false,
+    name: 'Trading Illegal Ports',
+    service_id: '20'
+};
+const SERVICE_FACTION_SHIP_CRAFTING =
+{
+    faction_only: true,
+    name: 'Faction Ship Crafting',
+    service_id: '21'
+};
+const SERVICE_FACTION_FABRICATION =
+{
+    faction_only: true,
+    name: 'Faction Fabrication',
+    service_id: '22'
+};
+const SERVICE_CREW_HIRING = { faction_only: false, name: 'Crew Hiring', service_id: '23' };
+const SERVICE_FIGHTER_WING = { faction_only: true, name: 'Fighter Wing', service_id: '24' };
+const SERVICE_WORMHOLE_TRAVEL =
+{
+    faction_only: false,
+    name: 'Wormhole Travel',
+    service_id: '25'
+};
+const SERVICE_TRIBUTE = { faction_only: false, name: 'Tribute', service_id: '26' };
+const SERVICE_PORT_FITTING = { faction_only: false, name: 'Port Fitting', service_id: '27' };
+const SERVICE_AMENITY_ILLEGAL =
+{
+    faction_only: false,
+    name: 'Amenity Illegal',
+    service_id: '29'
+};
+const SERVICE_SHIP_ROOM_FITTING =
+{
+    faction_only: false,
+    name: 'Ship Room Fitting',
+    service_id: '30'
+};
+const SERVICE_DATA_MINING = { faction_only: false, name: 'Data Mining', service_id: '31' };
+const SERVICE_TRAINING = { faction_only: false, name: 'Training', service_id: '32' };
+const SERVICE_MEDITATION = { faction_only: true, name: 'Meditation', service_id: '33' };
+const SERVICE_TRAVELLING_MERCHANT =
+{
+    faction_only: false,
+    name: 'Travelling Merchant',
+    service_id: '34'
+};
+const SERVICE_FORGE = { faction_only: false, name: 'Forge', service_id: '35' };
+const SERVICE_SHIP_TRADING_ADVANCED =
+{
+    faction_only: false,
+    name: 'Ship Trading Advanced',
+    service_id: '36'
+};
+const SERVICE_TRADING_COMPANIONS =
+{
+    faction_only: false,
+    name: 'Trading Companions',
+    service_id: '37'
+}
