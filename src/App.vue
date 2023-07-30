@@ -3,6 +3,7 @@ import { RouterLink, RouterView } from 'vue-router'
 import HelloWorld from './components/HelloWorld.vue'
 import { useTheme } from 'vuetify';
 import { ref } from 'vue';
+import { useStorage } from '@vueuse/core';
 
 const theme = useTheme()
 
@@ -11,24 +12,44 @@ const toggleTheme = () => theme.global.name.value = theme.global.current.value.d
 const tab = ref(null);
 const drawer = ref(false);
 
+const state = useStorage(
+    'my-store',
+    { apiKey: '', },
+    localStorage,
+    { mergeDefaults: true } // <--
+)
+
+const system = ref({
+    adriftCommodities: [
+        {
+            name: "Selenium",
+            amount: 11300257,
+        },
+        {
+            name: "Potassium",
+            amount: 4086440,
+        },
+    ]
+})
+
 const items = ref([
-        {
-          title: 'Foo',
-          value: 'foo',
-        },
-        {
-          title: 'Bar',
-          value: 'bar',
-        },
-        {
-          title: 'Fizz',
-          value: 'fizz',
-        },
-        {
-          title: 'Buzz',
-          value: 'buzz',
-        },
-      ])
+    {
+        title: 'Foo',
+        value: 'foo',
+    },
+    {
+        title: 'Bar',
+        value: 'bar',
+    },
+    {
+        title: 'Fizz',
+        value: 'fizz',
+    },
+    {
+        title: 'Buzz',
+        value: 'buzz',
+    },
+])
 </script>
 
 <template>
@@ -41,8 +62,6 @@ const items = ref([
 
                 <v-toolbar-title>My files</v-toolbar-title>
 
-                <v-spacer></v-spacer>
-
                 <v-btn variant="text" icon="mdi-magnify"></v-btn>
 
                 <v-btn variant="text" icon="mdi-filter"></v-btn>
@@ -54,10 +73,31 @@ const items = ref([
                 <v-list :items="items"></v-list>
             </v-navigation-drawer>
 
-            <v-main style="height: 500px;">
+            <v-main class="h-screen">
                 <v-card-text>
-                    The navigation drawer will appear from the bottom on smaller size screens.
+                    Please enter your API key to get started. You need to be a patron to have access to an API key.
                 </v-card-text>
+                <v-text-field label="API key" v-model="state.apiKey"></v-text-field>
+
+
+                <v-table fixed-header density="compact" class="h-100">
+                    <thead>
+                        <tr>
+                            <th class="text-left">
+                                Name
+                            </th>
+                            <th class="text-left">
+                                Amount
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="comm in system.adriftCommodities" :key="comm.name">
+                            <td>{{ comm.name }}</td>
+                            <td>{{ comm.amount }}</td>
+                        </tr>
+                    </tbody>
+                </v-table>
             </v-main>
         </v-layout>
     </v-card>
