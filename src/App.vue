@@ -3,8 +3,9 @@ import { RouterLink, RouterView } from 'vue-router'
 import { ref } from 'vue';
 import { useStorage } from '@vueuse/core';
 import type { Ref } from 'vue';
+import { reactive } from 'vue';
 
-const drawer = ref(false);
+const dialog = ref(false);
 
 const state = useStorage(
     'my-store',
@@ -13,17 +14,8 @@ const state = useStorage(
     { mergeDefaults: true } // <--
 )
 
-const system = ref({
-    adriftCommodities: [
-        {
-            name: "Selenium",
-            amount: 11300257,
-        },
-        {
-            name: "Potassium",
-            amount: 4086440,
-        },
-    ]
+const system = reactive({
+    adriftCommodities: [] as any
 })
 
 const selectedCommodity: Ref<any> = ref(null);
@@ -31,67 +23,120 @@ function selectCommodity(commodity: any) {
     selectedCommodity.value = commodity;
 }
 function commodityStyle(commodity: any) {
-    return commodity.name === selectedCommodity.value?.name ? "highlighted" : "";
+    return commodity.commodity_name === selectedCommodity.value?.commodity_name ? "highlighted" : "";
 }
 
+function performApiTask(apiTask: any) {
+    var myHeaders = new Headers();
+    myHeaders.append("Authorization", `Bearer ${state.value.apiKey}`);
+
+    var requestOptions = {
+        method: 'POST',
+        headers: myHeaders,
+        redirect: 'follow'
+    };
+
+    let promise = fetch(`https://play.textspaced.com/api${apiTask}`, requestOptions as any);
+    promise.then(result => console.log(result))
+        .catch(error => {
+            console.log('error', error)
+        });
+
+    return promise;
+}
+async function performAsync(action: any) {
+    return (await performApiTask(action)).json()
+}
+function toArray(obj: any) {
+    return Object.entries(obj).map(([key, value]) => value);
+}
+async function getAdriftCommodities() {
+    let adrift = [] as any;
+    for (let page = 0; page < 10; page++) {
+        adrift = [...adrift, ...toArray((await performAsync(`/location/?page=${page}`)).adrift_cargo.commodities).filter(sc => sc !== null)];
+    }
+    adrift.sort((a: any, b: any) => b.amount - a.amount);
+    return adrift;
+}
+
+(async () => {
+    const adrift = (await getAdriftCommodities() as any);
+    console.log(adrift);
+    system.adriftCommodities = adrift;
+})();
 </script>
 
 <template>
-    <v-card>
-        <v-layout>
+    <v-layout>
+        <v-app-bar color="primary" prominent>
+            <!-- <v-app-bar-nav-icon variant="text" @click.stop="drawer = !drawer"></v-app-bar-nav-icon> -->
+            <v-toolbar-title>Textspaced Quick UI</v-toolbar-title>
+        </v-app-bar>
 
-            <v-app-bar color="primary" prominent>
-                <!-- <v-app-bar-nav-icon variant="text" @click.stop="drawer = !drawer"></v-app-bar-nav-icon> -->
-                <v-toolbar-title>Textspaced Quick UI</v-toolbar-title>
-            </v-app-bar>
+        <v-main class="h-screen">
 
-            <v-main class="h-screen">
-
-                <div class="d-flex justify-center">
-                    <div class="flex-column">
+            <div class="d-flex justify-center">
+                <div class="flex-column">
+                    <v-card class="mt-2">
                         <v-card-text>
                             Please enter your API key to get started. You need to be a patron to have access to an API key.
+                            <v-text-field class="mt-2" label="API key" v-model="state.apiKey"></v-text-field>
                         </v-card-text>
-                        
-                        <v-text-field label="API key" v-model="state.apiKey"></v-text-field>
+                    </v-card>
 
-                        <v-card>
-                            <template v-slot:title>
-                                Commodities
-                            </template>
+                    <v-card class="mt-2">
+                        <template v-slot:title>
+                            Commodities
+                        </template>
 
-                            <template v-slot:subtitle>
-                                Adrift commodities (ready for recovery)
-                            </template>
+                        <template v-slot:subtitle>
+                            Adrift commodities (ready for recovery)
+                        </template>
 
-                            <template v-slot:text>
-                                <v-table fixed-header density="compact" class="h-100">
-                                    <thead>
-                                        <tr>
-                                            <th class="text-left">
-                                                Name
-                                            </th>
-                                            <th class="text-left">
-                                                Amount
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr @click="selectCommodity(comm)" :class="commodityStyle(comm)"
-                                            v-for="comm in system.adriftCommodities" :key="comm.name">
-                                            <td>{{ comm.name }}</td>
-                                            <td>{{ comm.amount }}</td>
-                                        </tr>
-                                    </tbody>
-                                </v-table>
-                            </template>
-                        </v-card>
-                    </div>
+                        <template v-slot:text>
+                            <v-table fixed-header density="compact" class="h-100">
+                                <thead>
+                                    <tr>
+                                        <th class="text-left">
+                                            Name
+                                        </th>
+                                        <th class="text-right">
+                                            Amount
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr @click="selectCommodity(comm)" :class="commodityStyle(comm)"
+                                        v-for="comm in system.adriftCommodities" :key="comm.name">
+                                        <td>{{ comm.commodity_name }}</td>
+                                        <td class="text-right">{{ comm.amount.toLocaleString() }}</td>
+                                    </tr>
+                                </tbody>
+                            </v-table>
+                        </template>
+                    </v-card>
+                    <v-card class="text-center mt-2 py-2">
+                        <v-btn color="primary" @click="dialog = true">
+                            Open Dialog
+                        </v-btn>
+
+                        <v-dialog v-model="dialog" fullscreen transition="dialog-bottom-transition" width="auto">
+                            <v-card>
+                                <v-card-text>
+                                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+                                    incididunt ut labore et dolore magna aliqua.
+                                </v-card-text>
+                                <v-card-actions>
+                                    <v-btn color="primary" block @click="dialog = false">Close Dialog</v-btn>
+                                </v-card-actions>
+                            </v-card>
+                        </v-dialog>
+                    </v-card>
                 </div>
+            </div>
 
-            </v-main>
-        </v-layout>
-    </v-card>
+        </v-main>
+    </v-layout>
 
     <!-- <nav>
             <RouterLink to="/">Home</RouterLink>
@@ -102,6 +147,12 @@ function commodityStyle(commodity: any) {
 </template>
 
 <style scoped>
+.dialog-bottom-transition-enter-active,
+.dialog-bottom-transition-leave-active {
+    transition: transform .2s ease-in-out;
+}
+
+
 tbody tr:hover,
 .highlighted {
     background-color: #e91e63;
