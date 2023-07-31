@@ -2,6 +2,7 @@
 import { RouterLink, RouterView } from 'vue-router'
 import { ref } from 'vue';
 import { useStorage } from '@vueuse/core';
+import type { Ref } from 'vue';
 
 const drawer = ref(false);
 
@@ -25,11 +26,11 @@ const system = ref({
     ]
 })
 
-const selectedCommodity = ref(null);
-function selectCommodity(commodity) {
+const selectedCommodity: Ref<any> = ref(null);
+function selectCommodity(commodity: any) {
     selectedCommodity.value = commodity;
 }
-function commodityStyle(commodity) {
+function commodityStyle(commodity: any) {
     return commodity.name === selectedCommodity.value?.name ? "highlighted" : "";
 }
 
@@ -43,10 +44,6 @@ function commodityStyle(commodity) {
                 <!-- <v-app-bar-nav-icon variant="text" @click.stop="drawer = !drawer"></v-app-bar-nav-icon> -->
                 <v-toolbar-title>Textspaced Quick UI</v-toolbar-title>
             </v-app-bar>
-
-            <v-navigation-drawer v-model="drawer" location="bottom" temporary>
-                <v-list :items="items"></v-list>
-            </v-navigation-drawer>
 
             <v-main class="h-screen">
 
