@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
 import { ref } from 'vue';
 import { useStorage } from '@vueuse/core';
 import type { Ref } from 'vue';
 import { reactive } from 'vue';
+import { getAdriftCommodities } from './apiFunctions';
+import { computed } from 'vue';
+
 
 const dialog = ref(false);
 
@@ -13,6 +15,10 @@ const state = useStorage(
     localStorage,
     { mergeDefaults: true } // <--
 )
+
+function isMobile() {
+    return window.innerWidth < 700;
+}
 
 const system = reactive({
     adriftCommodities: [] as any
@@ -26,44 +32,12 @@ function commodityStyle(commodity: any) {
     return commodity.commodity_name === selectedCommodity.value?.commodity_name ? "highlighted" : "";
 }
 
-function performApiTask(apiTask: any) {
-    var myHeaders = new Headers();
-    myHeaders.append("Authorization", `Bearer ${state.value.apiKey}`);
-
-    var requestOptions = {
-        method: 'POST',
-        headers: myHeaders,
-        redirect: 'follow'
-    };
-
-    let promise = fetch(`https://play.textspaced.com/api${apiTask}`, requestOptions as any);
-    promise.then(result => console.log(result))
-        .catch(error => {
-            console.log('error', error)
-        });
-
-    return promise;
-}
-async function performAsync(action: any) {
-    return (await performApiTask(action)).json()
-}
-function toArray(obj: any) {
-    return Object.entries(obj).map(([key, value]) => value);
-}
-async function getAdriftCommodities() {
-    let adrift = [] as any;
-    for (let page = 0; page < 10; page++) {
-        adrift = [...adrift, ...toArray((await performAsync(`/location/?page=${page}`)).adrift_cargo.commodities).filter(sc => sc !== null)];
-    }
-    adrift.sort((a: any, b: any) => b.amount - a.amount);
-    return adrift;
-}
-
 (async () => {
     const adrift = (await getAdriftCommodities() as any);
     console.log(adrift);
     system.adriftCommodities = adrift;
 })();
+
 </script>
 
 <template>
@@ -103,6 +77,9 @@ async function getAdriftCommodities() {
                                         <th class="text-right">
                                             Amount
                                         </th>
+                                        <th class="text-center">
+                                            Action
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -110,28 +87,26 @@ async function getAdriftCommodities() {
                                         v-for="comm in system.adriftCommodities" :key="comm.name">
                                         <td>{{ comm.commodity_name }}</td>
                                         <td class="text-right">{{ comm.amount.toLocaleString() }}</td>
+                                        <td class="text-center"><v-icon icon="mdi-dots-vertical"
+                                                @click="dialog = true"></v-icon></td>
                                     </tr>
                                 </tbody>
                             </v-table>
                         </template>
                     </v-card>
-                    <v-card class="text-center mt-2 py-2">
-                        <v-btn color="primary" @click="dialog = true">
-                            Open Dialog
-                        </v-btn>
 
-                        <v-dialog v-model="dialog" fullscreen transition="dialog-bottom-transition" width="auto">
-                            <v-card>
-                                <v-card-text>
-                                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-                                    incididunt ut labore et dolore magna aliqua.
-                                </v-card-text>
-                                <v-card-actions>
-                                    <v-btn color="primary" block @click="dialog = false">Close Dialog</v-btn>
-                                </v-card-actions>
-                            </v-card>
-                        </v-dialog>
-                    </v-card>
+
+                    <v-dialog v-model="dialog" :fullscreen="isMobile()" transition="dialog-bottom-transition" width="auto">
+                        <v-card>
+                            <v-card-text>
+                                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+                                incididunt ut labore et dolore magna aliqua.
+                            </v-card-text>
+                            <v-card-actions>
+                                <v-btn color="primary" block @click="dialog = false">Close Dialog</v-btn>
+                            </v-card-actions>
+                        </v-card>
+                    </v-dialog>
                 </div>
             </div>
 
@@ -151,7 +126,6 @@ async function getAdriftCommodities() {
 .dialog-bottom-transition-leave-active {
     transition: transform .2s ease-in-out;
 }
-
 
 tbody tr:hover,
 .highlighted {
