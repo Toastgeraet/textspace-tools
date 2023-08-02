@@ -3,9 +3,7 @@ import { ref } from 'vue';
 import { useStorage } from '@vueuse/core';
 import type { Ref } from 'vue';
 import { reactive } from 'vue';
-import { getAdriftCommodities } from './apiFunctions';
-import { computed } from 'vue';
-
+import { addPrices, getAdriftCommodities, performAsync } from './apiFunctions';
 
 const dialog = ref(false);
 
@@ -15,6 +13,8 @@ const state = useStorage(
     localStorage,
     { mergeDefaults: true } // <--
 )
+
+const hold_remaining = ref(0);
 
 function isMobile() {
     return window.innerWidth < 700;
@@ -32,10 +32,22 @@ function commodityStyle(commodity: any) {
     return commodity.commodity_name === selectedCommodity.value?.commodity_name ? "highlighted" : "";
 }
 
+async function remainingHold(){
+    return (await performAsync(`/status/hold/`)).hold_remaining;
+}
+
+async function recoverAndShipIt(commodity: any) {
+    await performAsync(`/action/cargo/commodities/recover/?commodity_id=${commodity.commodity_id}&quantity=${hold_remaining.value}`);
+    await performAsync(`/action/ftl/?system_id=${2413}`);
+    await performAsync(`/action/cargo/commodities/sell_all/?id_list=${commodity.commodity_id}`);
+    await performAsync(`/action/ftl/?system_id=${2412}`);
+}
+
 (async () => {
-    const adrift = (await getAdriftCommodities() as any);
-    console.log(adrift);
-    system.adriftCommodities = adrift;
+    const adriftCommodities = (await getAdriftCommodities() as any);
+    await addPrices(adriftCommodities);
+    hold_remaining.value = await remainingHold();
+    system.adriftCommodities = adriftCommodities;
 })();
 
 </script>
@@ -77,6 +89,9 @@ function commodityStyle(commodity: any) {
                                         <th class="text-right">
                                             Amount
                                         </th>
+                                        <th class="text-right">
+                                            Best Price (This region)
+                                        </th>
                                         <th class="text-center">
                                             Action
                                         </th>
@@ -87,6 +102,8 @@ function commodityStyle(commodity: any) {
                                         v-for="comm in system.adriftCommodities" :key="comm.name">
                                         <td>{{ comm.commodity_name }}</td>
                                         <td class="text-right">{{ comm.amount.toLocaleString() }}</td>
+                                        <td class="text-right">{{ comm.prices[0]?.sell_price.toLocaleString() }} ({{
+                                            comm.prices.find((p: any) => p.current)?.sell_price.toLocaleString() }})</td>
                                         <td class="text-center"><v-icon icon="mdi-dots-vertical"
                                                 @click="dialog = true"></v-icon></td>
                                     </tr>
@@ -99,11 +116,15 @@ function commodityStyle(commodity: any) {
                     <v-dialog v-model="dialog" :fullscreen="isMobile()" transition="dialog-bottom-transition" width="auto">
                         <v-card>
                             <v-card-text>
-                                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-                                incididunt ut labore et dolore magna aliqua.
+                                Pick up {Amount} units of <strong>{{ selectedCommodity.commodity_name
+                                }}</strong> and ship it to sell: <span><v-text-field label="Amount" :value="hold_remaining"></v-text-field></span>
+                                <v-text-field label="Target system id" value="2413"></v-text-field>
                             </v-card-text>
                             <v-card-actions>
-                                <v-btn color="primary" block @click="dialog = false">Close Dialog</v-btn>
+                                <v-spacer></v-spacer>
+                                <v-btn color="primary" variant="text" @click="recoverAndShipIt(selectedCommodity)">Ship
+                                    (FTL)</v-btn>
+                                <v-btn color="primary" variant="text" @click="dialog = false">Cancel</v-btn>
                             </v-card-actions>
                         </v-card>
                     </v-dialog>
