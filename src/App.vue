@@ -7,6 +7,8 @@ import { addPrices, getAdriftCommodities, performAsync } from './apiFunctions';
 
 const dialog = ref(false);
 
+const hidePassword = ref(true);
+
 const state = useStorage(
     'my-store',
     { apiKey: '', },
@@ -32,7 +34,7 @@ function commodityStyle(commodity: any) {
     return commodity.commodity_name === selectedCommodity.value?.commodity_name ? "highlighted" : "";
 }
 
-async function remainingHold(){
+async function remainingHold() {
     return (await performAsync(`/status/hold/`)).hold_remaining;
 }
 
@@ -66,7 +68,10 @@ async function recoverAndShipIt(commodity: any) {
                     <v-card class="mt-2">
                         <v-card-text>
                             Please enter your API key to get started. You need to be a patron to have access to an API key.
-                            <v-text-field class="mt-2" label="API key" v-model="state.apiKey"></v-text-field>
+                            <v-text-field class="mt-2" label="API key" v-model="state.apiKey"
+                                :append-icon="hidePassword ? 'mdi-eye' : 'mdi-eye-off'" @click:append="() => (hidePassword = !hidePassword)"
+                                :type="hidePassword ? 'password' : 'text'">
+                            </v-text-field>
                         </v-card-text>
                     </v-card>
 
@@ -117,7 +122,8 @@ async function recoverAndShipIt(commodity: any) {
                         <v-card>
                             <v-card-text>
                                 Pick up {Amount} units of <strong>{{ selectedCommodity.commodity_name
-                                }}</strong> and ship it to sell: <span><v-text-field label="Amount" :value="hold_remaining"></v-text-field></span>
+                                }}</strong> and ship it to sell: <span><v-text-field label="Amount"
+                                        :value="hold_remaining"></v-text-field></span>
                                 <v-text-field label="Target system id" value="2413"></v-text-field>
                             </v-card-text>
                             <v-card-actions>
