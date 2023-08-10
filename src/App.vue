@@ -4,6 +4,7 @@ import { useStorage } from '@vueuse/core';
 import type { Ref } from 'vue';
 import { reactive } from 'vue';
 import { addPrices, getAdriftCommodities, performAsync } from './apiFunctions';
+import { computed } from 'vue';
 
 const dialog = ref(false);
 
@@ -11,15 +12,45 @@ const hidePassword = ref(true);
 
 const state = useStorage(
     'my-store',
-    { apiKey: '', },
+    {
+        apiKey: '',
+        current_system: 2412, // laurin
+        target_system: 0,
+        target_volume: 0,
+        ship: {
+            current_charge: 0,
+            range: 0,
+        },
+        hold: {
+            hold_remaining: 0,
+            hold_size: 0
+        }
+    },
     localStorage,
     { mergeDefaults: true } // <--
 )
 
-const hold_remaining = ref(0);
+state.value.current_system = 2412;
+updateShipStatus();
 
 function isMobile() {
     return window.innerWidth < 700;
+}
+
+const ftlChargePercentage = computed(() => {
+    return (state.value.ship.current_charge / state.value.ship.range) * 100;
+})
+
+async function updateShipStatus() {
+    const ship = await performAsync(`/status/ship/`);
+    state.value.ship.current_charge = ship.current_charge;
+    state.value.ship.range = ship.range;
+}
+
+async function refuelShip() {
+    const status = await performAsync(`/status/ship/`);
+    const fuelMissing = status.max_fuel - status.current_fuel;
+    await performAsync(`/action/refuel/?quantity=${fuelMissing}`);
 }
 
 const system = reactive({
@@ -30,25 +61,35 @@ const selectedCommodity: Ref<any> = ref(null);
 function selectCommodity(commodity: any) {
     selectedCommodity.value = commodity;
 }
+
 function commodityStyle(commodity: any) {
     return commodity.commodity_name === selectedCommodity.value?.commodity_name ? "highlighted" : "";
 }
 
-async function remainingHold() {
-    return (await performAsync(`/status/hold/`)).hold_remaining;
+async function updateHoldStatus() {
+    const hold = (await performAsync(`/status/hold/`));
+    state.value.hold.hold_remaining = hold.hold_remaining;
+    state.value.hold.hold_size = hold.hold_size;
+}
+
+async function openDialog() {
+    dialog.value = true;
+    await updateHoldStatus();
+    state.value.target_volume = state.value.hold.hold_remaining;
 }
 
 async function recoverAndShipIt(commodity: any) {
-    await performAsync(`/action/cargo/commodities/recover/?commodity_id=${commodity.commodity_id}&quantity=${hold_remaining.value}`);
-    await performAsync(`/action/ftl/?system_id=${2413}`);
+    await performAsync(`/action/cargo/commodities/recover/?commodity_id=${commodity.commodity_id}&quantity=${state.value.target_volume}`);
+    await performAsync(`/action/ftl/?system_id=${state.value.target_system}`);
     await performAsync(`/action/cargo/commodities/sell_all/?id_list=${commodity.commodity_id}`);
-    await performAsync(`/action/ftl/?system_id=${2412}`);
+    await refuelShip();
+    await performAsync(`/action/ftl/?system_id=${state.value.current_system}`); // return trip
+    await updateShipStatus();
 }
 
 (async () => {
     const adriftCommodities = (await getAdriftCommodities() as any);
     await addPrices(adriftCommodities);
-    hold_remaining.value = await remainingHold();
     system.adriftCommodities = adriftCommodities;
 })();
 
@@ -69,10 +110,26 @@ async function recoverAndShipIt(commodity: any) {
                         <v-card-text>
                             Please enter your API key to get started. You need to be a patron to have access to an API key.
                             <v-text-field class="mt-2" label="API key" v-model="state.apiKey"
-                                :append-icon="hidePassword ? 'mdi-eye' : 'mdi-eye-off'" @click:append="() => (hidePassword = !hidePassword)"
+                                :append-icon="hidePassword ? 'mdi-eye' : 'mdi-eye-off'"
+                                @click:append="() => (hidePassword = !hidePassword)"
                                 :type="hidePassword ? 'password' : 'text'">
                             </v-text-field>
                         </v-card-text>
+                    </v-card>
+
+                    <v-card class="mt-2">
+                        <template v-slot:title>
+                            Ship
+                        </template>
+                        <template v-slot:text>                            
+                            <h3 class="mb-2">FTL Charge</h3>
+                            <v-progress-linear v-model="state.ship.current_charge" color="light-blue" striped height="25">
+                                <template v-slot:default="{ value }">
+                                    <strong>{{ Math.ceil(value) }} LYs</strong>
+                                </template>
+                            </v-progress-linear>
+                        </template>
+
                     </v-card>
 
                     <v-card class="mt-2">
@@ -110,7 +167,7 @@ async function recoverAndShipIt(commodity: any) {
                                         <td class="text-right">{{ comm.prices[0]?.sell_price.toLocaleString() }} ({{
                                             comm.prices.find((p: any) => p.current)?.sell_price.toLocaleString() }})</td>
                                         <td class="text-center"><v-icon icon="mdi-dots-vertical"
-                                                @click="dialog = true"></v-icon></td>
+                                                @click="openDialog"></v-icon></td>
                                     </tr>
                                 </tbody>
                             </v-table>
@@ -123,8 +180,8 @@ async function recoverAndShipIt(commodity: any) {
                             <v-card-text>
                                 Pick up {Amount} units of <strong>{{ selectedCommodity.commodity_name
                                 }}</strong> and ship it to sell: <span><v-text-field label="Amount"
-                                        :value="hold_remaining"></v-text-field></span>
-                                <v-text-field label="Target system id" value="2413"></v-text-field>
+                                        v-model="state.target_volume"></v-text-field></span>
+                                <v-text-field label="Target system id" v-model="state.target_system"></v-text-field>
                             </v-card-text>
                             <v-card-actions>
                                 <v-spacer></v-spacer>
